@@ -76,6 +76,14 @@ const postSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    likesCount: {
+      type: Number,
+      default: 0,
+    },
+    commentsCount: {
+      type: Number,
+      default: 0,
+    },
     isFeatured: {
       type: Boolean,
       default: false,
@@ -158,6 +166,16 @@ postSchema.pre('save', function (next) {
 // Instance Methods
 postSchema.methods.incrementViews = async function () {
   this.viewsCount += 1;
+  return await this.save({ validateBeforeSave: false });
+};
+
+postSchema.methods.like = async function () {
+  this.likesCount += 1;
+  return await this.save({ validateBeforeSave: false });
+};
+
+postSchema.methods.incrementComments = async function () {
+  this.commentsCount += 1;
   return await this.save({ validateBeforeSave: false });
 };
 
