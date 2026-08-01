@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const DashboardStatistic = require('./DashboardStatistic');
 
 const statisticSchema = new mongoose.Schema(
   {
@@ -47,4 +48,6 @@ const statisticSchema = new mongoose.Schema(
 statisticSchema.index({ isActive: 1, displayOrder: 1 });
 
 const Statistic = mongoose.model('Statistic', statisticSchema);
+Statistic.DashboardStatistic = DashboardStatistic;
+
 module.exports = Statistic;
