@@ -39,8 +39,20 @@ const serviceSchema = new mongoose.Schema(
       trim: true,
       default: '',
     },
+    bannerImageUrl: {
+      type: String,
+      trim: true,
+      default: '',
+    },
     features: [{ type: String, trim: true }],
     benefits: [{ type: String, trim: true }],
+    seoMeta: {
+      metaTitle: { type: String, trim: true, default: '' },
+      metaDescription: { type: String, trim: true, default: '' },
+      keywords: [{ type: String, trim: true }],
+      canonicalUrl: { type: String, trim: true, default: '' },
+      ogImage: { type: String, trim: true, default: '' },
+    },
 
     // Admin Dashboard Control Fields
     displayOrder: {
@@ -110,11 +122,26 @@ serviceSchema.index({ status: 1, displayOrder: 1 });
 serviceSchema.index({ isDeleted: 1, createdAt: -1 });
 serviceSchema.index({ title: 'text', shortDescription: 'text', fullDescription: 'text' });
 
+// Virtuals
+serviceSchema.virtual('description').get(function () {
+  return this.fullDescription;
+});
+
 // Lifecycle Hooks
 serviceSchema.pre('validate', function (next) {
   if (this.title && (!this.slug || this.isModified('title'))) {
     this.slug = slugify(this.title);
   }
+
+  if (this.seoMeta) {
+    if (!this.seoMeta.metaTitle && this.title) {
+      this.seoMeta.metaTitle = this.title;
+    }
+    if (!this.seoMeta.metaDescription && this.shortDescription) {
+      this.seoMeta.metaDescription = this.shortDescription;
+    }
+  }
+
   next();
 });
 
