@@ -30,7 +30,7 @@ const roleSchema = new mongoose.Schema(
     ],
     isSystemRole: {
       type: Boolean,
-      default: false,
+      default: true,
     },
     isDeleted: {
       type: Boolean,
@@ -44,6 +44,8 @@ const roleSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true },
   }
 );
 
@@ -53,6 +55,12 @@ roleSchema.pre('validate', function (next) {
   }
   next();
 });
+
+// Instance Method: Check if role has a specific permission slug
+roleSchema.methods.hasPermission = function (permissionSlug) {
+  if (!this.permissions || this.permissions.length === 0) return false;
+  return this.permissions.some((p) => p.slug === permissionSlug || p.name === permissionSlug);
+};
 
 const Role = mongoose.model('Role', roleSchema);
 module.exports = Role;
