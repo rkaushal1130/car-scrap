@@ -32,40 +32,85 @@ const serviceSchema = new mongoose.Schema(
     icon: {
       type: String,
       trim: true,
-      default: '',
+      default: 'car',
     },
     imageUrl: {
       type: String,
       trim: true,
       default: '',
     },
-    features: [
-      {
-        type: String,
-        trim: true,
-      },
-    ],
-    benefits: [
-      {
-        type: String,
-        trim: true,
-      },
-    ],
+    features: [{ type: String, trim: true }],
+    benefits: [{ type: String, trim: true }],
+
+    // Admin Dashboard Control Fields
     displayOrder: {
       type: Number,
       default: 0,
+      index: true,
+    },
+    status: {
+      type: String,
+      enum: ['DRAFT', 'PUBLISHED', 'UNPUBLISHED', 'ARCHIVED'],
+      default: 'DRAFT',
+      index: true,
     },
     isActive: {
       type: Boolean,
       default: true,
       index: true,
     },
+    publishedAt: {
+      type: Date,
+      default: null,
+    },
+    unpublishedAt: {
+      type: Date,
+      default: null,
+    },
+    archivedAt: {
+      type: Date,
+      default: null,
+    },
+
+    // Audit & Soft Delete
+    createdBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null,
+    },
+    updatedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null,
+    },
+    deletedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null,
+    },
+    isDeleted: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+    deletedAt: {
+      type: Date,
+      default: null,
+    },
   },
   {
     timestamps: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true },
   }
 );
 
+// Compound & Text Search Indexes
+serviceSchema.index({ status: 1, displayOrder: 1 });
+serviceSchema.index({ isDeleted: 1, createdAt: -1 });
+serviceSchema.index({ title: 'text', shortDescription: 'text', fullDescription: 'text' });
+
+// Lifecycle Hooks
 serviceSchema.pre('validate', function (next) {
   if (this.title && (!this.slug || this.isModified('title'))) {
     this.slug = slugify(this.title);
@@ -73,8 +118,79 @@ serviceSchema.pre('validate', function (next) {
   next();
 });
 
-serviceSchema.index({ isActive: 1, displayOrder: 1 });
-serviceSchema.index({ title: 'text', shortDescription: 'text', fullDescription: 'text' });
+serviceSchema.pre('save', function (next) {
+  if (this.isModified('status')) {
+    if (this.status === 'PUBLISHED' && !this.publishedAt) {
+      this.publishedAt = new Date();
+    } else if (this.status === 'UNPUBLISHED') {
+      this.unpublishedAt = new Date();
+    } else if (this.status === 'ARCHIVED') {
+      this.archivedAt = new Date();
+    }
+  }
+  next();
+});
+
+// Admin Control Methods
+serviceSchema.methods.publish = async function (userId) {
+  this.status = 'PUBLISHED';
+  this.publishedAt = new Date();
+  this.isActive = true;
+  if (userId) this.updatedBy = userId;
+  return await this.save();
+};
+
+serviceSchema.methods.unpublish = async function (userId) {
+  this.status = 'UNPUBLISHED';
+  this.unpublishedAt = new Date();
+  this.isActive = false;
+  if (userId) this.updatedBy = userId;
+  return await this.save();
+};
+
+serviceSchema.methods.archive = async function (userId) {
+  this.status = 'ARCHIVED';
+  this.archivedAt = new Date();
+  this.isActive = false;
+  if (userId) this.updatedBy = userId;
+  return await this.save();
+};
+
+serviceSchema.methods.softDelete = async function (userId) {
+  this.isDeleted = true;
+  this.deletedAt = new Date();
+  if (userId) this.deletedBy = userId;
+  return await this.save();
+};
+
+serviceSchema.methods.restore = async function (userId) {
+  this.isDeleted = false;
+  this.deletedAt = null;
+  this.deletedBy = null;
+  if (userId) this.updatedBy = userId;
+  return await this.save();
+};
+
+serviceSchema.methods.toggleStatus = async function (userId) {
+  this.isActive = !this.isActive;
+  if (userId) this.updatedBy = userId;
+  return await this.save();
+};
+
+// Admin Query Statics
+serviceSchema.statics.findAdminManaged = function ({ search, status, isDeleted = false, page = 1, limit = 10, sort = '-createdAt' }) {
+  const query = { isDeleted };
+
+  if (status) query.status = status;
+  if (search) query.$text = { $search: search };
+
+  const skip = (page - 1) * limit;
+
+  return Promise.all([
+    this.find(query).sort(sort).skip(skip).limit(limit).lean(),
+    this.countDocuments(query),
+  ]);
+};
 
 const Service = mongoose.model('Service', serviceSchema);
 module.exports = Service;
