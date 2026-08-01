@@ -1,0 +1,55 @@
+/**
+ * Application Constants
+ */
+
+const ROLES = {
+  SUPER_ADMIN: 'SUPER_ADMIN',
+  ADMIN: 'ADMIN',
+  EDITOR: 'EDITOR',
+  AUTHOR: 'AUTHOR',
+  OPERATIONS_MANAGER: 'OPERATIONS_MANAGER',
+  SUPPORT_AGENT: 'SUPPORT_AGENT',
+};
+
+const POST_STATUS = {
+  DRAFT: 'DRAFT',
+  PUBLISHED: 'PUBLISHED',
+  ARCHIVED: 'ARCHIVED',
+};
+
+const FAQ_STATUS = {
+  ACTIVE: 'ACTIVE',
+  INACTIVE: 'INACTIVE',
+  DRAFT: 'DRAFT',
+  PUBLISHED: 'PUBLISHED',
+};
+
+const VEHICLE_CATEGORIES = ['hatchback', 'sedan', 'suv', 'twowheeler', 'commercial'];
+const FUEL_TYPES = ['petrol', 'diesel', 'cng', 'electric'];
+const VEHICLE_CONDITIONS = ['complete', 'accidental', 'junk'];
+
+const HTTP_STATUS_CODES = {
+  OK: 200,
+  CREATED: 201,
+  ACCEPTED: 202,
+  NO_CONTENT: 204,
+  BAD_REQUEST: 400,
+  UNAUTHORIZED: 401,
+  FORBIDDEN: 403,
+  NOT_FOUND: 404,
+  CONFLICT: 409,
+  UNPROCESSABLE_ENTITY: 422,
+  TOO_MANY_REQUESTS: 429,
+  INTERNAL_SERVER_ERROR: 500,
+  SERVICE_UNAVAILABLE: 503,
+};
+
+module.exports = {
+  ROLES,
+  POST_STATUS,
+  FAQ_STATUS,
+  VEHICLE_CATEGORIES,
+  FUEL_TYPES,
+  VEHICLE_CONDITIONS,
+  HTTP_STATUS_CODES,
+};
