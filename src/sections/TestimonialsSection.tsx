@@ -102,23 +102,34 @@ export const TestimonialsSection: React.FC = () => {
           </div>
         </div>
 
-        {/* 5-Metric Value Ribbon */}
-        <div className="mt-14 bg-white border border-gray-200 rounded-2xl p-5 shadow-xs grid grid-cols-2 md:grid-cols-4 gap-4 text-xs font-semibold text-gray-700 font-['Outfit']">
-          <div className="flex items-center gap-2 justify-center">
-            <ShieldCheck className="w-4 h-4 text-[#0D7A41] shrink-0" />
-            <span>Official RVSF Facility</span>
+        {/* Enhanced Metric Value Ribbon */}
+        <div className="mt-16 bg-white border border-gray-200/90 rounded-2xl p-6 sm:p-8 md:p-10 shadow-md hover:shadow-lg transition-shadow duration-300 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8 font-['Outfit']">
+          <div className="flex items-center gap-4 justify-center sm:justify-start md:justify-center p-2">
+            <div className="w-12 h-12 rounded-xl bg-[#0D7A41]/10 text-[#0D7A41] flex items-center justify-center shrink-0">
+              <ShieldCheck className="w-6 h-6 sm:w-7 sm:h-7" />
+            </div>
+            <span className="text-base sm:text-lg font-bold text-gray-800 tracking-tight">Official RVSF Facility</span>
           </div>
-          <div className="flex items-center gap-2 justify-center border-l border-gray-100">
-            <Coins className="w-4 h-4 text-[#0D7A41] shrink-0" />
-            <span>Instant Digital Payout</span>
+
+          <div className="flex items-center gap-4 justify-center sm:justify-start md:justify-center p-2 md:border-l border-gray-200/80">
+            <div className="w-12 h-12 rounded-xl bg-[#0D7A41]/10 text-[#0D7A41] flex items-center justify-center shrink-0">
+              <Coins className="w-6 h-6 sm:w-7 sm:h-7" />
+            </div>
+            <span className="text-base sm:text-lg font-bold text-gray-800 tracking-tight">Instant Digital Payout</span>
           </div>
-          <div className="flex items-center gap-2 justify-center border-l border-gray-100">
-            <Clock className="w-4 h-4 text-[#0D7A41] shrink-0" />
-            <span>Same-Day Towing Pickup</span>
+
+          <div className="flex items-center gap-4 justify-center sm:justify-start md:justify-center p-2 md:border-l border-gray-200/80">
+            <div className="w-12 h-12 rounded-xl bg-[#0D7A41]/10 text-[#0D7A41] flex items-center justify-center shrink-0">
+              <Clock className="w-6 h-6 sm:w-7 sm:h-7" />
+            </div>
+            <span className="text-base sm:text-lg font-bold text-gray-800 tracking-tight">Same-Day Towing Pickup</span>
           </div>
-          <div className="flex items-center gap-2 justify-center border-l border-gray-100">
-            <Sprout className="w-4 h-4 text-[#0D7A41] shrink-0" />
-            <span>100% Green Recycling</span>
+
+          <div className="flex items-center gap-4 justify-center sm:justify-start md:justify-center p-2 md:border-l border-gray-200/80">
+            <div className="w-12 h-12 rounded-xl bg-[#0D7A41]/10 text-[#0D7A41] flex items-center justify-center shrink-0">
+              <Sprout className="w-6 h-6 sm:w-7 sm:h-7" />
+            </div>
+            <span className="text-base sm:text-lg font-bold text-gray-800 tracking-tight">100% Green Recycling</span>
           </div>
         </div>
       </div>
