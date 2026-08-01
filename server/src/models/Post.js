@@ -88,6 +88,15 @@ const postSchema = new mongoose.Schema(
       canonicalUrl: { type: String, trim: true, default: '' },
       ogImage: { type: String, trim: true, default: '' },
     },
+    isDeleted: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+    deletedAt: {
+      type: Date,
+      default: null,
+    },
   },
   {
     timestamps: true,
@@ -96,6 +105,18 @@ const postSchema = new mongoose.Schema(
   }
 );
 
+// Indexes
+postSchema.index({ status: 1, publishedAt: -1 });
+postSchema.index({ category: 1, status: 1 });
+postSchema.index({ tags: 1 });
+postSchema.index({ title: 'text', excerpt: 'text', content: 'text', tags: 'text' });
+
+// Virtuals
+postSchema.virtual('readingTimeFormatted').get(function () {
+  return `${this.readingTime || 1} min read`;
+});
+
+// Hooks: Pre-validate slug & reading time calculation
 postSchema.pre('validate', function (next) {
   if (this.title && (!this.slug || this.isModified('title'))) {
     this.slug = slugify(this.title);
@@ -112,8 +133,6 @@ postSchema.pre('validate', function (next) {
 
   if (this.featuredImage && this.featuredImage.url && !this.coverImage) {
     this.coverImage = this.featuredImage.url;
-  } else if (this.coverImage && (!this.featuredImage || !this.featuredImage.url)) {
-    this.featuredImage = { ...this.featuredImage, url: this.coverImage };
   }
 
   if (this.seoMeta) {
@@ -128,6 +147,7 @@ postSchema.pre('validate', function (next) {
   next();
 });
 
+// Hooks: Pre-save publishedAt timestamp assignment
 postSchema.pre('save', function (next) {
   if (this.isModified('status') && this.status === 'PUBLISHED' && !this.publishedAt) {
     this.publishedAt = new Date();
@@ -135,10 +155,33 @@ postSchema.pre('save', function (next) {
   next();
 });
 
-postSchema.index({ status: 1, publishedAt: -1 });
-postSchema.index({ category: 1, status: 1 });
-postSchema.index({ tags: 1 });
-postSchema.index({ title: 'text', excerpt: 'text', content: 'text', tags: 'text' });
+// Instance Methods
+postSchema.methods.incrementViews = async function () {
+  this.viewsCount += 1;
+  return await this.save({ validateBeforeSave: false });
+};
+
+postSchema.methods.softDelete = async function () {
+  this.isDeleted = true;
+  this.deletedAt = new Date();
+  this.status = 'ARCHIVED';
+  return await this.save();
+};
+
+// Statics
+postSchema.statics.findPublished = function (filter = {}) {
+  return this.find({ ...filter, status: 'PUBLISHED', isDeleted: false })
+    .populate('author', 'fullName email avatarUrl')
+    .populate('category', 'name slug color')
+    .sort({ publishedAt: -1 });
+};
+
+postSchema.statics.findFeatured = function () {
+  return this.find({ status: 'PUBLISHED', isFeatured: true, isDeleted: false })
+    .populate('author', 'fullName avatarUrl')
+    .populate('category', 'name slug color')
+    .sort({ publishedAt: -1 });
+};
 
 const Post = mongoose.model('Post', postSchema);
 module.exports = Post;

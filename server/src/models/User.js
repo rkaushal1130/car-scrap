@@ -33,6 +33,7 @@ const userSchema = new mongoose.Schema(
         message: '{VALUE} is not a valid role',
       },
       default: 'ADMIN',
+      index: true,
     },
     avatarUrl: {
       type: String,
@@ -41,6 +42,7 @@ const userSchema = new mongoose.Schema(
     isActive: {
       type: Boolean,
       default: true,
+      index: true,
     },
     refreshToken: {
       type: String,
@@ -56,13 +58,35 @@ const userSchema = new mongoose.Schema(
     },
     lastLoginAt: {
       type: Date,
+      default: null,
+    },
+    isDeleted: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+    deletedAt: {
+      type: Date,
+      default: null,
     },
   },
   {
     timestamps: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true },
   }
 );
 
+// Indexes
+userSchema.index({ email: 1 });
+userSchema.index({ role: 1, isActive: 1 });
+
+// Virtuals
+userSchema.virtual('displayName').get(function () {
+  return `${this.fullName} (${this.role})`;
+});
+
+// Hooks: Password hashing pre-save
 userSchema.pre('save', async function (next) {
   if (!this.isModified('password')) return next();
   const salt = await bcrypt.genSalt(10);
@@ -70,45 +94,44 @@ userSchema.pre('save', async function (next) {
   next();
 });
 
+// Instance Methods
 userSchema.methods.isPasswordCorrect = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };
 
 userSchema.methods.generateAccessToken = function () {
   return jwt.sign(
-    {
-      _id: this._id,
-      email: this.email,
-      role: this.role,
-    },
+    { _id: this._id, email: this.email, role: this.role },
     process.env.JWT_SECRET || 'fallback_secret_key',
-    {
-      expiresIn: process.env.JWT_EXPIRE || '15m',
-    }
+    { expiresIn: process.env.JWT_EXPIRE || '15m' }
   );
 };
 
 userSchema.methods.generateRefreshToken = function () {
   return jwt.sign(
-    {
-      _id: this._id,
-    },
+    { _id: this._id },
     process.env.JWT_REFRESH_SECRET || 'fallback_refresh_secret_key',
-    {
-      expiresIn: process.env.JWT_REFRESH_EXPIRE || '7d',
-    }
+    { expiresIn: process.env.JWT_REFRESH_EXPIRE || '7d' }
   );
 };
 
 userSchema.methods.generatePasswordResetToken = function () {
   const resetToken = crypto.randomBytes(32).toString('hex');
-  this.passwordResetToken = crypto
-    .createHash('sha256')
-    .update(resetToken)
-    .digest('hex');
-
+  this.passwordResetToken = crypto.createHash('sha256').update(resetToken).digest('hex');
   this.passwordResetExpires = Date.now() + 15 * 60 * 1000;
   return resetToken;
+};
+
+userSchema.methods.softDelete = async function () {
+  this.isDeleted = true;
+  this.deletedAt = new Date();
+  this.isActive = false;
+  return await this.save();
+};
+
+// Statics
+userSchema.statics.findActiveAdmins = function () {
+  return this.find({ role: { $in: ['SUPER_ADMIN', 'ADMIN'] }, isActive: true, isDeleted: false });
 };
 
 const User = mongoose.model('User', userSchema);
